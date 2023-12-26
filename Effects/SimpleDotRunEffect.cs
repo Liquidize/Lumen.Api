@@ -7,9 +7,6 @@ using System.Threading.Tasks;
 
 namespace Lumen.Api.Effects
 {
-    /// <summary>
-    ///  Simple effect that causes a single pixel to move along the length of the led strip once per frame.
-    /// </summary>
     public class SimpleDotRunEffect : LedEffect
     {
         protected LedColor Color;
@@ -60,13 +57,19 @@ namespace Lumen.Api.Effects
         protected override void Render(ILedCanvas canvas, double deltaTime)
         {
             canvas.FillSolid(ColorLibrary.Black);
+
             Location += 1;
+           
+
             if (Location >= canvas.PixelCount)
             {
                 Location = 0;
             }
 
+
             canvas.DrawPixel(Location, Color);
+
+
 
         }
 
