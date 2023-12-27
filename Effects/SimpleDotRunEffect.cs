@@ -93,26 +93,9 @@ namespace Lumen.Api.Effects
         /// <param name="effectParams">Key-value pair of parameters, if none is passed Defaults are obtained</param>
         public override void SetEffectParameters(Dictionary<string, object> effectParams)
         {
-            if (effectParams == null)
-            {
-                effectParams = GetEffectDefaults();
-            }
-
-            if (effectParams.TryGetValue("lifetime", out object lifetime))
-            {
-                Lifetime = Convert.ToInt32(lifetime);
-            }
-
-            if (effectParams.TryGetValue("color", out object color))
-            {
-                Color = (LedColor)color;
-            }
-
-            if (effectParams.TryGetValue("dotSize", out object dotSize))
-            {
-                DotSize = Convert.ToUInt32(dotSize);
-            }
-
+            base.SetEffectParameters(effectParams);
+            Color = (LedColor)effectParams["color"];
+            DotSize = Convert.ToUInt32(effectParams["dotSize"]);
         }
     }
 }

@@ -20,7 +20,8 @@ namespace Lumen.Api.Effects
 
         protected LedEffect()
         {
-            SetEffectParameters(GetEffectDefaults());
+            var settings = GetEffectDefaults();
+            SetEffectParameters(settings);
         }
 
         protected LedEffect(Dictionary<string, object> effectParams)
@@ -95,12 +96,35 @@ namespace Lumen.Api.Effects
             Render(canvas, deltaTime);
         }
 
-
         /// <summary>
         /// Gets a dictionary containing the default parameters for this effect.
         /// </summary>
         /// <returns></returns>
-        protected abstract Dictionary<string, object> GetEffectDefaults();
+        protected virtual Dictionary<string, object> GetEffectDefaults()
+        {
+            return new Dictionary<string, object>
+            {
+                { "lifetime", Lifetime }
+            };
+        }
+
+        protected virtual Dictionary<string, object> MergeDefaults(Dictionary<string, object> effectParams)
+        {
+
+            if (effectParams == null || effectParams.Count == 0)
+                return GetEffectDefaults();
+
+            var defaults = GetEffectDefaults();
+            foreach (var kvp in defaults)
+            {
+                if (!effectParams.ContainsKey(kvp.Key))
+                {
+                    effectParams.Add(kvp.Key, kvp.Value);
+                }
+            }
+
+            return effectParams;
+        }
 
         /// <summary>
         /// Sets the effect parameters based off the given dictionary of values. If no dictionary is passed or it is empty get the defaults.
@@ -109,37 +133,8 @@ namespace Lumen.Api.Effects
         /// <param name="effectParams"></param>
         public virtual void SetEffectParameters(Dictionary<string, object> effectParams)
         {
-            if (effectParams == null || effectParams.Count == 0)
-            {
-                effectParams = GetEffectDefaults();
-            }
-            else
-            {
-                // Merge effectParams with defaults, prioritizing effectParams
-                var mergedParams = new Dictionary<string, object>(GetEffectDefaults());
-
-                foreach (var kvp in effectParams)
-                {
-                    if (!mergedParams.ContainsKey(kvp.Key))
-                    {
-                        // Add key-value pair from effectParams if it doesn't exist in defaults
-                        mergedParams.Add(kvp.Key, kvp.Value);
-                    }
-                    else
-                    {
-                        // Update existing key-value pair with value from effectParams
-                        mergedParams[kvp.Key] = kvp.Value;
-                    }
-                }
-
-                effectParams = mergedParams;
-            }
-
-
-            if (effectParams.TryGetValue("lifetime", out object lifetime))
-            {
-                Lifetime = Convert.ToInt32(lifetime);
-            }
+            effectParams = MergeDefaults(effectParams);
+            Lifetime = Convert.ToInt32(effectParams["lifetime"]);
         }
     }
 }
