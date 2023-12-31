@@ -14,6 +14,10 @@ namespace Lumen.Api.Effects
         public ColorPalette Palette { get; set; } = PaletteLibrary.Rainbow;
         public bool UsePalette { get; set; } = false;
 
+        public BreathingEffect(ILedCanvas canvas, Dictionary<string, object> settings) : base(canvas, settings)
+        {
+        }
+
 
         private double CalculateBrightness(double time)
         {
@@ -25,7 +29,7 @@ namespace Lumen.Api.Effects
         }
 
 
-        protected override void Render(ILedCanvas canvas, double deltaTime)
+        protected override void Render(double deltaTime)
         {
             // Calculate the current time since the effect started
             double elapsedTime = (DateTime.UtcNow - StartTime).TotalSeconds;
@@ -36,19 +40,19 @@ namespace Lumen.Api.Effects
             if (!UsePalette)
             {
                 var adjustedColor = Color * brightness;
-                canvas.FillSolid(adjustedColor);
+                Canvas.FillSolid(adjustedColor);
             }
             else
             {
-                for (uint i = 0; i < canvas.PixelCount; i++)
+                for (uint i = 0; i < Canvas.PixelCount; i++)
                 {
-                    var adjustedColor = Palette[(i / (double)canvas.PixelCount)] * brightness;
-                    canvas.DrawPixel(i, adjustedColor);
+                    var adjustedColor = Palette[(i / (double)Canvas.PixelCount)] * brightness;
+                    Canvas.DrawPixel(i, adjustedColor);
                 }
             }
 
         }
-
+        
         protected override Dictionary<string, object> GetEffectDefaults()
         {
             return base.GetEffectDefaults().Concat(new Dictionary<string, object>()

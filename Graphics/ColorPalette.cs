@@ -31,6 +31,14 @@ namespace Lumen.Api.Graphics
             Blend = blend;
         }
 
+        [JsonIgnore]
+        public virtual LedColor this[int i]
+        {
+            get
+            {
+                return Colors[i % Colors.Length];
+            }
+        }
 
 
         [JsonIgnore]

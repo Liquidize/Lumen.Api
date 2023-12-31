@@ -35,8 +35,8 @@ namespace Lumen.Api.Graphics
         public static readonly LedColor Coral = new LedColor(255, 127, 80);
         public static readonly LedColor Tomato = new LedColor(255, 99, 71);
         public static readonly LedColor OrangeRed = new LedColor(255, 69, 0);
-        public static readonly LedColor DarkOrange = new LedColor(255, 140, 0);
-        public static readonly LedColor Orange = new LedColor(255, 165, 0);
+        public static readonly LedColor DarkOrange = new LedColor(255, 100, 0);
+        public static readonly LedColor Orange = new LedColor(255, 128, 0); // The orange from color codes website doesn't appear all that orange on the strips, so im using a darker one.
 
         // Yellows
         public static readonly LedColor Gold = new LedColor(255, 215, 0);
@@ -50,6 +50,7 @@ namespace Lumen.Api.Graphics
         public static readonly LedColor Orchid = new LedColor(218, 212, 214);
         public static readonly LedColor Magenta = new LedColor(255, 0, 255);
         public static readonly LedColor Indigo = new LedColor(75, 0, 130);
+        public static readonly LedColor Purple = new LedColor(128, 0, 128);
 
         // Greens
         public static readonly LedColor GreenYellow = new LedColor(173, 255, 47);

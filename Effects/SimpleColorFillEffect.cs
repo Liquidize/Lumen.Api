@@ -7,39 +7,19 @@ using System.Threading.Tasks;
 
 namespace Lumen.Api.Effects
 {
+    
     public class SimpleColorFillEffect : LedEffect
     {
     
-        protected LedColor Color;
+        protected LedColor Color = ColorLibrary.DarkRed;
         protected uint EveryNth = 1;
 
         /// <summary>
         ///  Default constructor used when loading
         /// </summary>
-        public SimpleColorFillEffect() : base()
+        public SimpleColorFillEffect(ILedCanvas canvas, Dictionary<string, object> settings) : base(canvas, settings)
         {
 
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="color"></param>
-        /// <param name="everyNth"></param>
-        public SimpleColorFillEffect(LedColor color, uint everyNth = 10)
-        {
-            Color = color;
-            EveryNth = everyNth;
-        }
-
-
-        /// <summary>
-        ///  Called once per frame optional
-        /// </summary>
-        /// <param name="deltaTime"></param>
-        public override void Update(double deltaTime)
-        {
-            base.Update(deltaTime);
         }
 
         /// <summary>
@@ -47,11 +27,11 @@ namespace Lumen.Api.Effects
         /// </summary>
         /// <param name="canvas"></param>
         /// <param name="deltaTime"></param>
-        protected override void Render(ILedCanvas canvas, double deltaTime)
+        protected override void Render(double deltaTime)
         {
-            canvas.FillSolid(ColorLibrary.Black);
-            for (uint i = 0; i < canvas.PixelCount; i += EveryNth)
-                canvas.DrawPixel(i, Color);
+            Canvas.FillSolid(ColorLibrary.Black);
+            for (uint i = 0; i < Canvas.PixelCount; i += EveryNth)
+                Canvas.DrawPixel(i, Color);
         }
 
         /// <summary>

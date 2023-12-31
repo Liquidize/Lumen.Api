@@ -19,8 +19,8 @@ namespace Lumen.Api.Graphics
             ColorLibrary.Green,
             ColorLibrary.Blue,
             ColorLibrary.Indigo,
-            ColorLibrary.Violet
-        });
+            ColorLibrary.Purple
+        }, false);
 
 
         public static readonly GaussianPalette SmoothRainbow = new GaussianPalette(new LedColor[]
@@ -31,8 +31,8 @@ namespace Lumen.Api.Graphics
             ColorLibrary.Green,
             ColorLibrary.Blue,
             ColorLibrary.Indigo,
-            ColorLibrary.Violet
-        });
+            ColorLibrary.Purple
+        }, 0);
 
         public static readonly GaussianPalette SteppedRainbow = new GaussianPalette(new LedColor[]
         {
@@ -42,7 +42,7 @@ namespace Lumen.Api.Graphics
             ColorLibrary.Green,
             ColorLibrary.Blue,
             ColorLibrary.Indigo,
-            ColorLibrary.Violet
+            ColorLibrary.Purple
         }, 0, false);
 
     }
