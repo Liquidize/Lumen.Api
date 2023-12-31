@@ -64,9 +64,9 @@ namespace Lumen.Api.Effects
             }).ToDictionary();
         }
 
-        public override void SetEffectParameters(Dictionary<string, object> effectParams)
+        public override void SetEffectSettings(Dictionary<string, object> effectParams, bool mergeDefaults = true)
         {
-            base.SetEffectParameters(effectParams);
+            base.SetEffectSettings(effectParams, mergeDefaults);
             Color = (LedColor)effectParams["color"];
             Frequency = Convert.ToDouble(effectParams["frequency"]);
             Palette = (ColorPalette)effectParams["palette"];

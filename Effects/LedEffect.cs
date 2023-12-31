@@ -29,14 +29,25 @@ namespace Lumen.Api.Effects
                 settings = GetEffectDefaults();
             }
 
+
             Canvas = canvas;
-            SetEffectParameters(settings);
+            SetEffectSettings(settings);
         }
+
+        /// <summary>
+        /// Display name of this effect
+        /// </summary>
+        public virtual string Name => GetType().Name;
+
+        /// <summary>
+        /// Unique ID of this effect instance
+        /// </summary>
+        public string Id { get; private set; }
 
         /// <summary>
         /// Lifetime of the effect in seconds. 0 means infinite.
         /// </summary>
-        public virtual int Lifetime { get; protected set; } = 5;
+        public virtual double Lifetime { get; protected set; } = 5;
 
         [JsonIgnore]
         public DateTime StartTime { get; protected set; } = DateTime.UtcNow;
@@ -51,7 +62,7 @@ namespace Lumen.Api.Effects
         /// <summary>
         /// Current applied settings as a dictionary
         /// </summary>
-        public Dictionary<string, object> Settings { get; protected set; }
+        public Dictionary<string, object> Settings { get; protected set; } = new Dictionary<string, object>();
 
         /// <summary>
         /// Optional logic update function for abstraction, called directly before Render
@@ -68,7 +79,9 @@ namespace Lumen.Api.Effects
         /// <returns></returns>
         public DateTime GetEndTime()
         {
-            return StartTime.AddSeconds(Lifetime);
+            var seconds = (int)Lifetime;
+            var ms = (int)((Lifetime - seconds) * 1000);
+            return StartTime.AddSeconds(seconds).AddMilliseconds(ms);
         }
 
 
@@ -126,26 +139,34 @@ namespace Lumen.Api.Effects
         }
 
         /// <summary>
+        /// Gets the current effect settings as a dictionary, used for Lumen API calls.
+        /// </summary>
+        /// <returns></returns>
+        public virtual Dictionary<string, object> GetEffectSettings()
+        {
+            return Settings;
+        }
+
+        /// <summary>
         /// Merge in the default values for this effect into the given dictionary if their keys aren't present already
         /// </summary>
         /// <param name="effectParams"></param>
         /// <returns></returns>
-        protected virtual Dictionary<string, object> MergeDefaults(Dictionary<string, object> effectParams)
+        protected virtual Dictionary<string, object> MergeSettings(Dictionary<string, object> original, Dictionary<string, object> target)
         {
 
-            if (effectParams == null || effectParams.Count == 0)
-                return GetEffectDefaults();
+            if (target == null || target.Count == 0)
+                return original;
 
-            var defaults = GetEffectDefaults();
-            foreach (var kvp in defaults)
+            foreach (var kvp in original)
             {
-                if (!effectParams.ContainsKey(kvp.Key))
+                if (!target.ContainsKey(kvp.Key))
                 {
-                    effectParams.Add(kvp.Key, kvp.Value);
+                    target.Add(kvp.Key, kvp.Value);
                 }
             }
 
-            return effectParams;
+            return target;
         }
 
         /// <summary>
@@ -153,11 +174,26 @@ namespace Lumen.Api.Effects
         /// If a dictionary with values is passed, we merge in the missing values from the defaults.
         /// </summary>
         /// <param name="effectParams"></param>
-        public virtual void SetEffectParameters(Dictionary<string, object> effectParams)
+        public virtual void SetEffectSettings(Dictionary<string, object> effectParams, bool mergeDefaults = true)
         {
-            effectParams = MergeDefaults(effectParams);
-            Lifetime = Convert.ToInt32(effectParams["lifetime"]);
+            effectParams = mergeDefaults
+                ? MergeSettings(GetEffectDefaults(), effectParams)
+                : MergeSettings(GetEffectSettings(), effectParams);
+            Lifetime = Convert.ToDouble(effectParams["lifetime"]);
             Settings = effectParams;
+        }
+
+        public void SetId(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                throw new ArgumentNullException(nameof(id));
+
+            if (!string.IsNullOrEmpty(Id))
+            {
+                throw new InvalidOperationException("Cannot set the ID of an effect that already has one");
+            }
+
+            Id = id;
         }
     }
 }

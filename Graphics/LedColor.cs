@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.VisualBasic.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -209,7 +208,7 @@ namespace Lumen.Api.Graphics
             R = red; G = green; B = blue; return this;
         }
 
-        [System.Text.Json.Serialization.JsonIgnore]
+        [JsonIgnore]
         public double Hue
         {
             get
