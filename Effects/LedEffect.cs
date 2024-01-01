@@ -31,7 +31,7 @@ namespace Lumen.Api.Effects
 
 
             Canvas = canvas;
-            SetEffectSettings(settings);
+            SetEffectSettings(settings, true);
         }
 
         /// <summary>
@@ -174,7 +174,7 @@ namespace Lumen.Api.Effects
         /// If a dictionary with values is passed, we merge in the missing values from the defaults.
         /// </summary>
         /// <param name="effectParams"></param>
-        public virtual void SetEffectSettings(Dictionary<string, object> effectParams, bool mergeDefaults = true)
+        public virtual void SetEffectSettings(Dictionary<string, object> effectParams, bool mergeDefaults = false)
         {
             effectParams = mergeDefaults
                 ? MergeSettings(GetEffectDefaults(), effectParams)

@@ -52,7 +52,7 @@ namespace Lumen.Api.Effects
         /// Sets the parameters of this instance of the effect from the provided dictionary.
         /// </summary>
         /// <param name="effectParams">Key-value pair of parameters, if none is passed Defaults are obtained</param>
-        public override void SetEffectSettings(Dictionary<string, object> effectParams, bool mergeDefaults = true)
+        public override void SetEffectSettings(Dictionary<string, object> effectParams, bool mergeDefaults = false)
         {
             base.SetEffectSettings(effectParams, mergeDefaults);
             Lifetime = Convert.ToInt32(effectParams["lifetime"]);
