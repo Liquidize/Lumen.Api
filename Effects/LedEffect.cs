@@ -5,10 +5,104 @@ using System.Text;
 using System.Threading.Tasks;
 using Lumen.Api.Graphics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Lumen.Api.Effects
 {
+    /// <summary>
+    /// Abstract base class of all effects without generic settings type. Used internally within Lumen as an object reference to all effects,
+    /// defines all critical methods and properties that effects must implement.
+    /// </summary>
     public abstract class LedEffect
+    {
+        /// <summary>
+        /// Display name of this effect.
+        /// </summary>
+        public abstract string Name { get; }
+
+        /// <summary>
+        /// Checks whether the lifetime of the effect is over.
+        /// </summary>
+        /// <returns></returns>
+        public abstract bool IsLifetimeOver();
+
+        /// <summary>
+        /// Draws a single frame of the effect.
+        /// </summary>
+        /// <param name="deltaTime"></param>
+        public abstract void DrawFrame(double deltaTime);
+
+        /// <summary>
+        /// Gets the unique id of this effect.
+        /// </summary>
+        public string Id { get; private set; }
+
+        /// <summary>
+        /// Gets the start time of this effect
+        /// </summary>
+        [JsonIgnore] public DateTime StartTime { get; protected set; }
+
+        /// <summary>
+        /// Sets the start time of the effect.
+        /// </summary>
+        /// <param name="time"></param>
+        public void SetStartTime(DateTime time)
+        {
+            StartTime = time;
+        }
+
+        /// <summary>
+        /// Gets the end time of the effect.
+        /// </summary>
+        /// <returns></returns>
+        public abstract DateTime GetEndTime();
+
+        /// <summary>
+        /// Request that this effect end, forcing its lifetime to be over regardless of how many seconds were left.
+        /// </summary>
+        public abstract void RequestEnd();
+
+        /// <summary>
+        /// Gets the current effect settings
+        /// </summary>
+        /// <returns></returns>
+        public abstract EffectSettings GetEffectSettings();
+        /// <summary>
+        /// Gets the default effect settings.
+        /// </summary>
+        /// <returns></returns>
+        public abstract EffectSettings GetEffectDefaults();
+        /// <summary>
+        /// Sets the current effect settings via a serialized JObject of a settings object.
+        /// </summary>
+        /// <param name="settingsObj"></param>
+        public abstract void SetEffectSettings(JObject settingsObj);
+
+        /// <summary>
+        /// Sets the unique ID of this effect. Throws an exception if the ID is already set.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
+        public void SetId(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                throw new ArgumentNullException(nameof(id));
+
+            if (!string.IsNullOrEmpty(Id))
+            {
+                throw new InvalidOperationException("Cannot set the ID of an effect that already has one");
+            }
+
+            Id = id;
+        }
+    }
+
+    /// <summary>
+    /// The base class for all effects. Utilizies a custom settings class for settings per effect type.
+    /// </summary>
+    /// <typeparam name="TSettings">Settings class used for this effect</typeparam>
+    public abstract class LedEffect<TSettings> : LedEffect where TSettings : EffectSettings
     {
 
         /// <summary>
@@ -19,7 +113,7 @@ namespace Lumen.Api.Effects
         /// <param name="canvas"></param>
         /// <param name="settings"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public LedEffect(ILedCanvas canvas, Dictionary<string, object> settings)
+        public LedEffect(ILedCanvas canvas, TSettings settings)
         {
             if (canvas == null)
                 throw new ArgumentNullException(nameof(canvas));
@@ -29,40 +123,34 @@ namespace Lumen.Api.Effects
                 settings = GetEffectDefaults();
             }
 
-
+            Settings = settings;
             Canvas = canvas;
-            SetEffectSettings(settings, true);
         }
 
         /// <summary>
         /// Display name of this effect
         /// </summary>
-        public virtual string Name => GetType().Name;
-
-        /// <summary>
-        /// Unique ID of this effect instance
-        /// </summary>
-        public string Id { get; private set; }
-
-        /// <summary>
-        /// Lifetime of the effect in seconds. 0 means infinite.
-        /// </summary>
-        public virtual double Lifetime { get; protected set; } = 5;
-
-        [JsonIgnore]
-        public DateTime StartTime { get; protected set; } = DateTime.UtcNow;
-
-        private bool _endRequested = false;
+        public override string Name
+        {
+            get { return GetType().Name; }
+        }
 
         /// <summary>
         /// Canvas used for drawing
         /// </summary>
-        protected ILedCanvas Canvas { get; set; }
+        protected ILedCanvas Canvas { get; }
 
         /// <summary>
         /// Current applied settings as a dictionary
         /// </summary>
-        public Dictionary<string, object> Settings { get; protected set; } = new Dictionary<string, object>();
+        protected TSettings Settings { get; set; }
+
+
+        /// <summary>
+        /// A boolean to dictate whether the effect has been requested to end immediately
+        /// </summary>
+        private bool _endRequested = false;
+
 
         /// <summary>
         /// Optional logic update function for abstraction, called directly before Render
@@ -77,123 +165,91 @@ namespace Lumen.Api.Effects
         /// Gets the end time for this effect
         /// </summary>
         /// <returns></returns>
-        public DateTime GetEndTime()
+        public override DateTime GetEndTime()
         {
-            var seconds = (int)Lifetime;
-            var ms = (int)((Lifetime - seconds) * 1000);
+            var seconds = (int)Settings.Lifetime;
+            var ms = (int)((Settings.Lifetime - seconds) * 1000);
             return StartTime.AddSeconds(seconds).AddMilliseconds(ms);
         }
 
 
         /// <summary>
-        /// Sets the start time of this effect
-        /// </summary>
-        /// <param name="time"></param>
-        public void SetStartTime(DateTime time)
-        {
-            StartTime = time;
-        }
-
-        /// <summary>
         /// Checks whether this effects lifetime is over.
         /// </summary>
         /// <returns></returns>
-        public bool IsLifetimeOver()
+        public override bool IsLifetimeOver()
         {
-            return (Lifetime != 0 && DateTime.UtcNow > GetEndTime()) || _endRequested;
+            return (Settings.Lifetime != 0 && DateTime.UtcNow > GetEndTime()) || _endRequested;
+        }
+
+        /// <summary>
+        /// Request the effect to end immediately, regardless of how many seconds were left.
+        /// </summary>
+        public override void RequestEnd()
+        {
+            _endRequested = true;
         }
 
         /// <summary>
         /// Renders a single frame of the effect.
         /// </summary>
-        /// <param name="canvas">The canvas to draw on</param>
         /// <param name="deltaTime">Total milliseconds between last frame draw and now, potentially useful for smoothing effects out</param>
         protected abstract void Render(double deltaTime);
 
         /// <summary>
-        /// Request that this effect end, forcing its lifetime to be over regardless of how many seconds were left.
-        /// </summary>
-        public void RequestEnd() => _endRequested = true;
-
-        /// <summary>
         /// Draws a single frame
         /// </summary>
-        /// <param name="canvas"></param>
         /// <param name="deltaTime"></param>
-        public void DrawFrame(double deltaTime)
+        public override void DrawFrame(double deltaTime)
         {
             Update(deltaTime);
             Render(deltaTime);
         }
 
         /// <summary>
-        /// Gets a dictionary containing the default parameters for this effect.
+        /// Gets an instance of the default settings for this effect.
         /// </summary>
         /// <returns></returns>
-        protected virtual Dictionary<string, object> GetEffectDefaults()
+        public override TSettings GetEffectDefaults()
         {
-            return new Dictionary<string, object>
-            {
-                { "lifetime", 5 }
-            };
+            return Activator.CreateInstance<TSettings>();
         }
 
         /// <summary>
-        /// Gets the current effect settings as a dictionary, used for Lumen API calls.
+        /// Gets the current effect settings.
         /// </summary>
         /// <returns></returns>
-        public virtual Dictionary<string, object> GetEffectSettings()
+        public override EffectSettings GetEffectSettings()
         {
             return Settings;
         }
 
         /// <summary>
-        /// Merge in the default values for this effect into the given dictionary if their keys aren't present already
+        /// Sets the active effect settings via a serialized JObject of a settings object.
+        /// Deserializes the instance if possible, otherwise throws an exception.
         /// </summary>
-        /// <param name="effectParams"></param>
-        /// <returns></returns>
-        protected virtual Dictionary<string, object> MergeSettings(Dictionary<string, object> original, Dictionary<string, object> target)
+        /// <param name="settingsObj"></param>
+        /// <exception cref="JsonException"></exception>
+        /// <exception cref="Exception"></exception>
+        public override void SetEffectSettings(JObject settingsObj)
         {
-
-            if (target == null || target.Count == 0)
-                return original;
-
-            foreach (var kvp in original)
+            try
             {
-                if (!target.ContainsKey(kvp.Key))
+                var settings = settingsObj.ToObject<TSettings>();
+                if (settings != null)
                 {
-                    target.Add(kvp.Key, kvp.Value);
+                    Settings = settings;
+                    Console.WriteLine("Set settings");
                 }
             }
-
-            return target;
-        }
-
-        /// <summary>
-        /// Sets the effect parameters based off the given dictionary of values. If no dictionary is passed, or it is empty get the defaults.
-        /// If a dictionary with values is passed, we merge in the missing values from the defaults.
-        /// </summary>
-        /// <param name="effectParams"></param>
-        public virtual void SetEffectSettings(Dictionary<string, object> effectParams, bool mergeDefaults = false)
-        {
-            effectParams = mergeDefaults
-                ? MergeSettings(GetEffectDefaults(), effectParams)
-                : MergeSettings(GetEffectSettings(), effectParams);
-            Lifetime = Convert.ToDouble(effectParams["lifetime"]);
-            Settings = effectParams;
-        }
-
-        public void SetId(string id)
-        {
-            if (string.IsNullOrEmpty(id))
-                throw new ArgumentNullException(nameof(id));
-
-            if (!string.IsNullOrEmpty(Id))
+            catch (JsonException jsonEx)
             {
-                throw new InvalidOperationException("Cannot set the ID of an effect that already has one");
+                throw new JsonException($"Error deserializing settings JSON: {jsonEx.Message}");
             }
-
-            Id = id;
+            catch (Exception ex)
+            {
+                throw new Exception($"An error occurred while setting effect settings: {ex.Message}");
+            }
         }
     }
 }

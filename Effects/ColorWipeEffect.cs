@@ -7,55 +7,30 @@ using Lumen.Api.Graphics;
 
 namespace Lumen.Api.Effects
 {
-    
-    public class ColorWipeEffect : LedEffect
+
+    public class ColorWipeEffect : LedEffect<ColorWipeEffectSettings>
     {
-        public LedColor Color = ColorLibrary.Orange;
-        public uint WipeSize = 0;
-        public ColorPalette Palette { get; set; } = PaletteLibrary.Rainbow; // Add a ColorPalette property
-
-        public bool UsePalette { get; set; } = true; // Add a boolean property for using the palette for color wipe
-
-        private int _currentPaletteIndex = 0;
-
-        public bool FillLastColor { get; set; } = true;
+        public uint WipeSize { get; set; } = 0;
 
         private int _lastPaletteIndex = -1;
 
-        public ColorWipeEffect(ILedCanvas canvas, Dictionary<string, object> settings) : base(canvas, settings)
+        private int _currentPaletteIndex = 0;
+
+        public ColorWipeEffect(ILedCanvas canvas, ColorWipeEffectSettings settings) : base(canvas, settings)
         {
         }
 
-        protected override Dictionary<string, object> GetEffectDefaults()
-        {
-            return base.GetEffectDefaults().Concat(new Dictionary<string, object>()
-            {
-                { "color", ColorLibrary.Orange },
-                { "palette", PaletteLibrary.Rainbow },
-                { "usePalette", true },
-                { "fillLastColor", true }
-            }).ToDictionary();
-        }
-
-        public override void SetEffectSettings(Dictionary<string, object> effectParams, bool mergeDefaults = false)
-        {
-            base.SetEffectSettings(effectParams, mergeDefaults);
-            Color = (LedColor)effectParams["color"];
-            Palette = (ColorPalette)effectParams["palette"];
-            UsePalette = (bool)effectParams["usePalette"];
-            FillLastColor = (bool)effectParams["fillLastColor"];
-        }
 
         protected override void Update(double deltaTime)
         {
             if (WipeSize >= Canvas.PixelCount)
             {
-                if (UsePalette)
+                if (Settings.UsePalette)
                 {
                     _lastPaletteIndex = _currentPaletteIndex; // Save the last color in the palette
                     // Move to the next color in the palette
                     _currentPaletteIndex++;
-                    if (_currentPaletteIndex >= Palette.OriginalSize)
+                    if (_currentPaletteIndex >= Settings.Palette.OriginalSize)
                     {
                         _currentPaletteIndex = 0; // Start over if reached the end of the palette
                     }
@@ -68,32 +43,31 @@ namespace Lumen.Api.Effects
             }
         }
 
-    protected override void Render(double deltaTime)
+        protected override void Render(double deltaTime)
         {
 
-            if (UsePalette &&
-                FillLastColor && _lastPaletteIndex != -1) // If using palette and filling last color, fill with the last color in the palette
+            if (Settings.UsePalette &&
+                Settings.FillLastColor && _lastPaletteIndex != -1) // If using palette and filling last color, fill with the last color in the palette
             {
-                Canvas.FillSolid(Palette[_lastPaletteIndex]);
+                Canvas.FillSolid(Settings.Palette[_lastPaletteIndex]);
             }
             else // If not using palette or not filling last color, fill with black
             {
                 Canvas.FillSolid(ColorLibrary.Black);
             }
 
-            if (!UsePalette) // If not using palette, fill with a single color
+            if (!Settings.UsePalette) // If not using palette, fill with a single color
             {
                 for (var i = 0; i < WipeSize; i++)
                 {
-                    Canvas.DrawPixel((uint)i, Color);
+                    Canvas.DrawPixel((uint)i, Settings.Color);
                 }
             }
             else // If using palette, fill with colors from the palette
             {
-                int startIndex = _currentPaletteIndex;
                 for (var i = 0; i < WipeSize; i++)
                 {
-                    Canvas.DrawPixel((uint)i, Palette[startIndex]);
+                    Canvas.DrawPixel((uint)i, Settings.Palette[_currentPaletteIndex]);
                 }
             }
         }
