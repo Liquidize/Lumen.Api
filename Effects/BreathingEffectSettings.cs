@@ -25,9 +25,6 @@ namespace Lumen.Api.Effects
 
         public BreathingEffectSettings()
         {
-
-            Lifetime = 5;
-
         }
 
 

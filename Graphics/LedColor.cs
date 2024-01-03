@@ -4,9 +4,9 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Lumen.Api.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
 namespace Lumen.Api.Graphics
 {
     /// <summary>
@@ -209,6 +209,7 @@ namespace Lumen.Api.Graphics
         }
 
         [JsonIgnore]
+        [SwaggerIgnore]
         public double Hue
         {
             get

@@ -76,7 +76,8 @@ namespace Lumen.Api.Effects
         /// Sets the current effect settings via a serialized JObject of a settings object.
         /// </summary>
         /// <param name="settingsObj"></param>
-        public abstract void SetEffectSettings(JObject settingsObj);
+        public abstract void SetEffectSettings(EffectSettings settingsObj);
+
 
         /// <summary>
         /// Sets the unique ID of this effect. Throws an exception if the ID is already set.
@@ -231,24 +232,18 @@ namespace Lumen.Api.Effects
         /// <param name="settingsObj"></param>
         /// <exception cref="JsonException"></exception>
         /// <exception cref="Exception"></exception>
-        public override void SetEffectSettings(JObject settingsObj)
+        public override void SetEffectSettings(EffectSettings settings)
         {
             try
             {
-                var settings = settingsObj.ToObject<TSettings>();
                 if (settings != null)
                 {
-                    Settings = settings;
-                    Console.WriteLine("Set settings");
+                    Settings = (TSettings)settings;
                 }
             }
-            catch (JsonException jsonEx)
+            catch (InvalidCastException ex)
             {
-                throw new JsonException($"Error deserializing settings JSON: {jsonEx.Message}");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"An error occurred while setting effect settings: {ex.Message}");
+                throw new Exception($"Unable to cast settings object to type {typeof(TSettings).Name}", ex);
             }
         }
     }
