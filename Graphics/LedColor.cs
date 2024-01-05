@@ -209,7 +209,6 @@ namespace Lumen.Api.Graphics
         }
 
         [JsonIgnore]
-        [SwaggerIgnore]
         public double Hue
         {
             get
